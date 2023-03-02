@@ -1,14 +1,27 @@
 {
-  "name": "cs-p5-games",
-  "version": "1.0.0",
-  "main": "index.js",
-  "author": "sjdonado",
-  "license": "MIT",
+  "name": "vite-template-solid",
+  "version": "0.0.0",
+  "description": "",
   "scripts": {
-    "start": "serve pages"
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
   },
+  "license": "MIT",
   "devDependencies": {
-    "prettier": "^2.8.4",
-    "serve": "^14.2.0"
+    "autoprefixer": "^10.4.13",
+    "eslint": "^7.32.0 || ^8.2.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-solid": "^0.10.0",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.2.4",
+    "vite": "^4.1.1",
+    "vite-plugin-solid": "^2.5.0"
+  },
+  "dependencies": {
+    "p5js-wrapper": "^1.2.3",
+    "solid-js": "^1.6.10"
   }
 }
