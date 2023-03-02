@@ -1,0 +1,14 @@
+{
+  "name": "cs-p5-games",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "sjdonado",
+  "license": "MIT",
+  "scripts": {
+    "start": "serve pages"
+  },
+  "devDependencies": {
+    "prettier": "^2.8.4",
+    "serve": "^14.2.0"
+  }
+}
