@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Tower of Hanoi</title>
+
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"
+      integrity="sha512-3RlxD1bW34eFKPwj9gUXEWtdSMC59QqIqHnD8O/NoTwSJhgxRizdcFVQhUMFyTp5RwLTDL0Lbcqtl8b7bFAzog=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+  </head>
+  <body>
+    <script type="text/javascript">
+      const defaultValues = {
+        disk: undefined,
+        end: undefined,
+        move_towers: undefined,
+        up: undefined,
+        down: undefined,
+        moves: [],
+        towers: [[], [], []],
+        stepsCounter: 0,
+        pause: false,
+      };
+
+      const initValues = {
+        positions: [50, 400, 750],
+        speed: 5,
+        infoLabelDefault: 'Step: 0/0',
+        startIcon: '&#9654;',
+        pauseIcon: '&#9208;',
+      };
+
+      function setup() {
+        createCanvas(1200, 650);
+
+        const title = createSpan('Tower of Hanoi');
+        title.addClass('title');
+        title.position(25, 20);
+
+        const disksLabel = createSpan('Disks');
+        disksLabel.addClass('label');
+        disksLabel.position(title.x + 320, title.y);
+
+        const disksNumSlider = createSlider(3, 15, 3);
+        disksNumSlider.position(
+          disksLabel.x + disksLabel.width + 10,
+          disksLabel.y
+        );
+
+        const speedLabel = createSpan('Speed');
+        speedLabel.addClass('label');
+        speedLabel.position(
+          disksNumSlider.x + disksNumSlider.width + 10,
+          disksNumSlider.y
+        );
+
+        const speedSlider = createSlider(1, 120, 5);
+        speedSlider.position(speedLabel.x + speedLabel.width + 5, speedLabel.y);
+
+        const startBtn = createButton(initValues.startIcon);
+        startBtn.position(
+          speedSlider.x + speedSlider.width + 20,
+          speedSlider.y
+        );
+
+        const resetBtn = createButton('Reset');
+        resetBtn.position(startBtn.x + startBtn.width + 8, startBtn.y);
+
+        const infoLabel = createSpan(initValues.infoLabelDefault);
+        infoLabel.addClass('label');
+        infoLabel.position(resetBtn.x + 100, resetBtn.y);
+
+        createSpan('A').position(153.5, 625);
+        createSpan('B').position(503.5, 625);
+        createSpan('C').position(853.5, 625);
+
+        disksNumSlider.elt.addEventListener('change', function () {
+          reload();
+        });
+
+        speedSlider.elt.addEventListener('change', function () {
+          window.global.speed = speedSlider.value();
+        });
+
+        startBtn.elt.addEventListener('click', function () {
+          if (window.global.moves.length == 0) {
+            reload();
+            window.global.moves = generateHanoiArray(disksNumSlider.value());
+            startBtn.html(initValues.pauseIcon);
+            return;
+          }
+
+          if (window.global.pause) {
+            startBtn.html(initValues.pauseIcon);
+          } else {
+            startBtn.html(initValues.startIcon);
+          }
+
+          window.global.pause = !window.global.pause;
+        });
+
+        resetBtn.elt.addEventListener('click', function () {
+          reload();
+        });
+
+        window.global = {
+          startBtn,
+          infoLabel,
+          disksNumSlider,
+          ...defaultValues,
+          ...initValues,
+        };
+
+        buildTowers();
+        buildDisks(disksNumSlider.value());
+      }
+
+      function draw() {
+        if (!window.global.pause) {
+          if (
+            typeof window.global.moves != 'undefined' &&
+            window.global.stepsCounter < window.global.moves.length &&
+            typeof window.global.disk == 'undefined'
+          ) {
+            window.global.move_towers =
+              window.global.moves[window.global.stepsCounter].split(';');
+            window.global.disk =
+              window.global.towers[window.global.move_towers[0]].pop();
+            window.global.start =
+              window.global.positions[window.global.move_towers[0]] +
+              window.global.disk.size / 2;
+            window.global.end =
+              window.global.positions[window.global.move_towers[1]] +
+              window.global.disk.size / 2;
+            window.global.up =
+              550 -
+              window.global.towers[window.global.move_towers[0]].length * 30;
+            clean();
+          }
+          if (typeof window.global.disk != 'undefined') {
+            if (
+              typeof window.global.up == 'undefined' &&
+              typeof window.global.down == 'undefined' &&
+              window.global.move_towers[0] < window.global.move_towers[1] &&
+              window.global.start < window.global.end
+            ) {
+              clean();
+              drawDisk(window.global.disk, window.global.start, 80);
+              window.global.start += window.global.speed;
+              if (window.global.start >= window.global.end)
+                window.global.down = 80;
+            }
+            if (
+              typeof window.global.up == 'undefined' &&
+              typeof window.global.down == 'undefined' &&
+              window.global.move_towers[0] > window.global.move_towers[1] &&
+              window.global.start > window.global.end
+            ) {
+              clean();
+              drawDisk(window.global.disk, window.global.start, 80);
+              window.global.start -= window.global.speed;
+              if (window.global.start <= window.global.end)
+                window.global.down = 80;
+            }
+            if (typeof window.global.up != 'undefined') {
+              if (window.global.up > 80) {
+                clean();
+                drawDisk(
+                  window.global.disk,
+                  window.global.start,
+                  window.global.up
+                );
+                window.global.up -= window.global.speed;
+              } else {
+                window.global.up = undefined;
+              }
+            }
+            if (typeof window.global.down != 'undefined') {
+              if (
+                window.global.down <=
+                550 -
+                  (window.global.towers[window.global.move_towers[1]].length *
+                    30 +
+                    window.global.disk.size / 2)
+              ) {
+                clean();
+                drawDisk(
+                  window.global.disk,
+                  window.global.start,
+                  window.global.down
+                );
+                window.global.down += window.global.speed;
+              } else {
+                window.global.towers[window.global.move_towers[1]].push(
+                  window.global.disk
+                );
+                clean();
+                window.global.stepsCounter++;
+                window.global.disk = undefined;
+                window.global.down = undefined;
+              }
+            }
+
+            if (window.global.stepsCounter <= window.global.moves.length) {
+              window.global.infoLabel.html(
+                `Step: <sup>${window.global.stepsCounter}</sup>&frasl;<sub>${window.global.moves.length}</sub>`
+              );
+            }
+          }
+        }
+      }
+
+      function buildTowers() {
+        let i = 0;
+        while (i < 750) {
+          fill(color(65));
+          rect(140 + i, 130, 20, 450);
+          rect(25 + i, 580, 250, 20);
+          i += 350;
+        }
+      }
+
+      function buildDisks(disksNumSlider) {
+        let i = 0;
+        let j = 0;
+        let width = 0;
+
+        textSize(15);
+        while (i < disksNumSlider) {
+          window.global.towers[0].push({ disksNumSlider: i + 1, size: width });
+          drawDisk(
+            window.global.towers[0][window.global.towers[0].length - 1],
+            50 + width / 2,
+            550 - j
+          );
+          j += 30;
+          i += 1;
+          width += 14;
+        }
+      }
+
+      function addDisks(disks, width, height) {
+        let i = 0;
+        disks.forEach(function (disk) {
+          // console.log("DRAWING -> ", width + disk.size / 2 , height - i);
+          drawDisk(disk, width + disk.size / 2, height - i);
+          i += 30;
+        });
+      }
+
+      function updateTowers() {
+        let j = 0;
+        for (let i = 0; i < 3; i++) {
+          addDisks(window.global.towers[i], 50 + j, 550);
+          j += 350;
+        }
+      }
+
+      function fillColorByIndex(index) {
+        const r = (index * 20) % 256;
+        const g = (index * 30) % 256;
+        const b = (index * 40) % 256;
+        fill(r, g, b);
+      }
+
+      function drawDisk(disk, x, y) {
+        fillColorByIndex(disk.disksNumSlider + 2);
+        rect(x - 20, y, 240 - disk.size, 20, 20, 15);
+        fill(50);
+        if (disk.disksNumSlider > 9) {
+          text(disk.disksNumSlider, x - disk.size / 2 + 92.5, y + 15);
+        } else {
+          text(disk.disksNumSlider, x - disk.size / 2 + 97.5, y + 15);
+        }
+      }
+
+      let generateHanoiArray = function (disksNumber) {
+        const moves = [];
+        recursiveHanoi(0, 2, 1, disksNumber);
+        return moves;
+        function recursiveHanoi(A, C, B, n) {
+          if (n == 1) {
+            moves.push(A + ';' + C);
+          } else {
+            recursiveHanoi(A, B, C, n - 1);
+            moves.push(A + ';' + C);
+            recursiveHanoi(B, C, A, n - 1);
+          }
+        }
+      };
+
+      function clean() {
+        clear();
+        buildTowers();
+        updateTowers();
+      }
+
+      function reload() {
+        Object.assign(window.global, {
+          ...defaultValues,
+          towers: defaultValues.towers.map((tower) => []),
+        });
+
+        window.global.infoLabel.html(window.global.infoLabelDefault);
+        window.global.startBtn.html(window.global.startIcon);
+
+        clear();
+        buildTowers();
+        buildDisks(window.global.disksNumSlider.value());
+      }
+    </script>
+    <style media="screen">
+      * {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        font-family: sans-serif;
+      }
+      .title {
+        font-size: 21px;
+        font-weight: bold;
+        margin-top: 5px;
+        text-decoration: underline;
+      }
+      .label {
+        margin-top: 10px;
+      }
+      body {
+        height: 650px;
+        width: 1200px;
+        overflow: hidden;
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 1160px;
+        height: 650px;
+        overflow: auto;
+        margin: 10px;
+        background-color: rgb(0, 0, 0);
+        background-color: rgba(0, 0, 0, 0.4);
+      }
+      .close {
+        color: grey;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .modal-header {
+        padding: 2px 16px;
+        color: black;
+      }
+      .modal-body {
+        padding: 2px 16px 16px 16px;
+      }
+      .modal-content {
+        position: relative;
+        background-color: #fefefe;
+        margin: auto;
+        padding: 0;
+        border: 1px solid #888;
+        width: 55%;
+        top: 33%;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2),
+          0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        animation-name: animatetop;
+        animation-duration: 0.4s;
+      }
+      @keyframes animatetop {
+        from {
+          top: 0px;
+          opacity: 0;
+        }
+        to {
+          top: 33%;
+          opacity: 1;
+        }
+      }
+      span {
+        font-family: sans-serif;
+      }
+      button {
+        -moz-box-shadow: inset 0px 1px 0px 0px #ffffff;
+        -webkit-box-shadow: inset 0px 1px 0px 0px #ffffff;
+        box-shadow: inset 0px 1px 0px 0px #ffffff;
+        background: -webkit-gradient(
+          linear,
+          left top,
+          left bottom,
+          color-stop(0.05, #ffffff),
+          color-stop(1, #f6f6f6)
+        );
+        background: -moz-linear-gradient(top, #ffffff 5%, #f6f6f6 100%);
+        background: -webkit-linear-gradient(top, #ffffff 5%, #f6f6f6 100%);
+        background: -o-linear-gradient(top, #ffffff 5%, #f6f6f6 100%);
+        background: -ms-linear-gradient(top, #ffffff 5%, #f6f6f6 100%);
+        background: linear-gradient(to bottom, #ffffff 5%, #f6f6f6 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#f6f6f6',GradientType=0);
+        background-color: #ffffff;
+        -moz-border-radius: 6px;
+        -webkit-border-radius: 6px;
+        border-radius: 6px;
+        border: 1px solid #dcdcdc;
+        display: inline-block;
+        cursor: pointer;
+        color: #666666;
+        font-family: sans-serif;
+        font-size: 15px;
+        font-weight: bold;
+        padding: 6px 24px;
+        margin-top: 5px;
+        text-decoration: none;
+        text-shadow: 0px 1px 0px #ffffff;
+      }
+      button:hover {
+        background: -webkit-gradient(
+          linear,
+          left top,
+          left bottom,
+          color-stop(0.05, #f6f6f6),
+          color-stop(1, #ffffff)
+        );
+        background: -moz-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+        background: -webkit-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+        background: -o-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+        background: -ms-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+        background: linear-gradient(to bottom, #f6f6f6 5%, #ffffff 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f6f6f6', endColorstr='#ffffff',GradientType=0);
+        background-color: #f6f6f6;
+      }
+      button:active {
+        position: relative;
+        top: 1px;
+      }
+      button:active {
+        position: relative;
+        top: 1px;
+      }
+      input {
+        width: 100px;
+      }
+      input[type='range'] {
+        height: 37px;
+        -webkit-appearance: none;
+        width: 100px;
+      }
+      input[type='range']:focus {
+        outline: none;
+      }
+      input[type='range']::-webkit-slider-runnable-track {
+        width: 100px;
+        height: 1px;
+        cursor: pointer;
+        animate: 0.2s;
+        box-shadow: 1px 1px 1px #000000;
+        background: #a9a9a9;
+        border-radius: 0px;
+        border: 0px solid #000000;
+      }
+      input[type='range']::-webkit-slider-thumb {
+        box-shadow: 0px 0px 1px #000000;
+        border: 1px solid #000000;
+        height: 30px;
+        width: 10px;
+        border-radius: 5px;
+        background: #ffffff;
+        cursor: pointer;
+        -webkit-appearance: none;
+        margin-top: -15px;
+      }
+      input[type='range']:focus::-webkit-slider-runnable-track {
+        background: #a9a9a9;
+      }
+      input[type='range']::-moz-range-track {
+        width: 100px;
+        height: 1px;
+        cursor: pointer;
+        animate: 0.2s;
+        box-shadow: 1px 1px 1px #000000;
+        background: #a9a9a9;
+        border-radius: 0px;
+        border: 0px solid #000000;
+      }
+      input[type='range']::-moz-range-thumb {
+        box-shadow: 0px 0px 1px #000000;
+        border: 1px solid #000000;
+        height: 30px;
+        width: 10px;
+        border-radius: 5px;
+        background: #ffffff;
+        cursor: pointer;
+      }
+      input[type='range']::-ms-track {
+        width: 100px;
+        height: 1px;
+        cursor: pointer;
+        animate: 0.2s;
+        background: transparent;
+        border-color: transparent;
+        color: transparent;
+      }
+      input[type='range']::-ms-fill-lower {
+        background: #a9a9a9;
+        border: 0px solid #000000;
+        border-radius: 0px;
+        box-shadow: 1px 1px 1px #000000;
+      }
+      input[type='range']::-ms-fill-upper {
+        background: #a9a9a9;
+        border: 0px solid #000000;
+        border-radius: 0px;
+        box-shadow: 1px 1px 1px #000000;
+      }
+      input[type='range']::-ms-thumb {
+        margin-top: 1px;
+        box-shadow: 0px 0px 1px #000000;
+        border: 1px solid #000000;
+        height: 30px;
+        width: 10px;
+        border-radius: 5px;
+        background: #ffffff;
+        cursor: pointer;
+      }
+      input[type='range']:focus::-ms-fill-lower {
+        background: #a9a9a9;
+      }
+      input[type='range']:focus::-ms-fill-upper {
+        background: #a9a9a9;
+      }
+    </style>
+  </body>
+</html>
