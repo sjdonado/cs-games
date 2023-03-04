@@ -1,290 +1,344 @@
 import { onMount } from 'solid-js';
 
-import { p5 } from 'p5js-wrapper';
+import { p5 as P5 } from 'p5js-wrapper';
 
 import init, { hanoi } from '@wasm/games';
 
+function getColorByIndex(index) {
+  const r = (index * 20) % 256;
+  const g = (index * 30) % 256;
+  const b = (index * 40) % 256;
+
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 function Hanoi() {
-  onMount(() => {
-    new p5((p) => {
-      const defaultValues = {
-        disk: undefined,
-        end: undefined,
-        moveTowers: undefined,
-        up: undefined,
-        down: undefined,
-        moves: [],
-        towers: [[], [], []],
-        stepsCounter: 0,
-        pause: false,
-      };
+  const draw = {
+    baseMarginX: 392,
+    baseWidth: 370,
+    pegHeight: 600,
+    baseY: 725,
+    pegY: 130,
+    diskY: 705,
+    diskMarginY: 25,
+    fillSize: 20,
+    topMargin: 80,
+  };
 
-      const initValues = {
-        positions: [50, 400, 750],
-        speed: 5,
-        infoLabelDefault: 'Step: 0/0',
-        startIcon: '&#9654;',
-        pauseIcon: '&#9208;',
-      };
+  const p5DOM = {
+    startButton: undefined,
+    infoLabel: undefined,
+    infoLabelDefault: 'Step: 0/0',
+    startIcon: '&#9654;',
+    pauseIcon: '&#9208;',
+  };
 
-      function buildTowers() {
-        let i = 0;
-        while (i < 750) {
-          p.fill(p.color(65));
-          p.rect(140 + i, 130, 20, 450);
-          p.rect(25 + i, 580, 250, 20);
-          i += 350;
-        }
-      }
+  const game = {
+    towers: [
+      { positionX: 50, disks: [] },
+      { positionX: 50 + draw.baseMarginX, disks: [] },
+      { positionX: 50 + draw.baseMarginX * 2, disks: [] },
+    ],
+    moves: [],
+    steps: 0,
+    pause: false,
+    speed: 5,
+    numberOfDisks: 3,
+  };
 
-      function getColorByIndex(index) {
-        const r = (index * 20) % 256;
-        const g = (index * 30) % 256;
-        const b = (index * 40) % 256;
+  const animation = {
+    currentMove: undefined,
+    currentDisk: undefined,
+  };
 
-        return `rgb(${r}, ${g}, ${b})`;
-      }
+  function drawTowers(p5) {
+    const pegMarginX = draw.baseMarginX / 2 + 4;
 
-      function drawDisk(disk, x, y) {
-        p.fill(getColorByIndex(disk.disksNumSlider + 2));
-        p.rect(x - 20, y, 240 - disk.size, 20, 20, 15);
-        p.fill(50);
+    p5.fill(p5.color(65));
 
-        p.text(
-          disk.disksNumSlider,
-          x - disk.size / 2 + 97.5 - (5 * Number(disk.disksNumSlider > 9)),
-          y + 15,
-        );
-      }
-      function buildDisks(disksNumSlider) {
-        let i = 0;
-        let j = 0;
-        let width = 0;
+    // A
+    p5.rect(pegMarginX, draw.pegY, draw.fillSize, draw.pegHeight);
+    p5.rect(25, draw.baseY, draw.baseWidth, draw.fillSize);
+    p5.createSpan('A').position(pegMarginX + 5, draw.baseY + draw.fillSize);
 
-        p.textSize(15);
-        while (i < disksNumSlider) {
-          window.global.towers[0].push({ disksNumSlider: i + 1, size: width });
-          drawDisk(
-            window.global.towers[0][window.global.towers[0].length - 1],
-            50 + width / 2,
-            550 - j,
-          );
-          j += 30;
-          i += 1;
-          width += 14;
-        }
-      }
+    // B
+    p5.rect(pegMarginX + draw.baseMarginX, draw.pegY, draw.fillSize, draw.pegHeight);
+    p5.rect(25 + draw.baseMarginX, draw.baseY, draw.baseWidth, draw.fillSize);
+    p5.createSpan('B').position(pegMarginX + draw.baseMarginX + 5, draw.baseY + draw.fillSize);
 
-      function addDisks(disks, width, height) {
-        let i = 0;
-        disks.forEach((disk) => {
-          // console.log("DRAWING -> ", width + disk.size / 2 , height - i);
-          drawDisk(disk, width + disk.size / 2, height - i);
-          i += 30;
-        });
-      }
+    // C
+    p5.rect(pegMarginX + draw.baseMarginX * 2, draw.pegY, draw.fillSize, draw.pegHeight);
+    p5.rect(25 + draw.baseMarginX * 2, draw.baseY, draw.baseWidth, draw.fillSize);
+    p5.createSpan('C').position(pegMarginX + draw.baseMarginX * 2 + 5, draw.baseY + draw.fillSize);
+  }
 
-      function updateTowers() {
-        let j = 0;
-        for (let i = 0; i < 3; i += 1) {
-          addDisks(window.global.towers[i], 50 + j, 550);
-          j += 350;
-        }
-      }
+  function drawDiskByCoordinates(p5, disk, x, y) {
+    p5.fill(getColorByIndex(disk.index + 2));
+    p5.rect(x - draw.fillSize, y, draw.baseWidth - 10 - disk.size, 20, 20, 15);
+    p5.fill(50);
 
-      function clean() {
-        p.clear();
-        buildTowers();
-        updateTowers();
-      }
+    p5.text(
+      disk.index,
+      x - disk.size / 2 + 156.5 - (5 * Number(disk.index > 9)),
+      y + 15,
+    );
+  }
 
-      function reload() {
-        Object.assign(window.global, {
-          ...defaultValues,
-          towers: defaultValues.towers.map(() => []),
-        });
+  function createAndDrawDisks(p5, numberOfDisks) {
+    let i = 0;
+    let j = 0;
+    let width = 0;
 
-        window.global.infoLabel.html(window.global.infoLabelDefault);
-        window.global.startBtn.html(window.global.startIcon);
+    p5.textSize(15);
 
-        p.clear();
-        buildTowers();
-        buildDisks(window.global.disksNumSlider.value());
-      }
+    while (i < numberOfDisks) {
+      game.towers[0].disks.push({ index: i + 1, size: width });
 
-      p.setup = () => {
-        p.createCanvas(1200, 650);
+      drawDiskByCoordinates(
+        p5,
+        game.towers[0].disks[game.towers[0].disks.length - 1],
+        50 + width / 2,
+        draw.diskY - j,
+      );
 
-        const title = p.createSpan('Tower of Hanoi');
+      j += draw.diskMarginY;
+      i += 1;
+      width += 14;
+    }
+  }
+  function addDisks(p5, disks, x, y) {
+    let i = 0;
+    disks.forEach((disk) => {
+      drawDiskByCoordinates(p5, disk, x + disk.size / 2, y - i);
+      i += draw.diskMarginY;
+    });
+  }
+
+  function refreshTowers(p5) {
+    // A
+    addDisks(p5, game.towers[0].disks, 50, draw.diskY);
+    // B
+    addDisks(p5, game.towers[1].disks, 50 + draw.baseMarginX, draw.diskY);
+    // C
+    addDisks(p5, game.towers[2].disks, 50 + draw.baseMarginX * 2, draw.diskY);
+  }
+
+  function refreshCanvas(p5) {
+    p5.clear();
+    drawTowers(p5);
+    refreshTowers(p5);
+  }
+
+  function reset(p5) {
+    Object.assign(game, {
+      towers: game.towers.map((tower) => ({ ...tower, disks: [] })),
+      moves: [],
+      steps: 0,
+      pause: false,
+    });
+
+    Object.assign(animation, {
+      currentMove: undefined,
+      currentDisk: undefined,
+    });
+
+    p5.clear();
+
+    p5DOM.infoLabel.html(p5DOM.infoLabelDefault);
+    p5DOM.startButton.html(p5DOM.startIcon);
+
+    drawTowers(p5);
+    createAndDrawDisks(p5, game.numberOfDisks);
+  }
+
+  function start(p5) {
+    reset(p5);
+    p5DOM.startButton.html(p5DOM.pauseIcon);
+    game.moves = hanoi(game.numberOfDisks);
+    p5DOM.startButton.html(p5DOM.pauseIcon);
+  }
+
+  function pause() {
+    p5DOM.startButton.html(game.pause ? p5DOM.pauseIcon : p5DOM.startIcon);
+    game.pause = !game.pause;
+  }
+
+  onMount(async () => {
+    await init();
+
+    new P5((p5) => {
+      p5.setup = () => {
+        const TOPBAR_Y = 20;
+        const RIGHT_MENU_X = 525;
+
+        p5.createCanvas(1200, 752);
+
+        const title = p5.createSpan('Tower of Hanoi');
         title.addClass('title');
-        title.position(25, 20);
+        title.position(25, TOPBAR_Y);
 
-        const disksLabel = p.createSpan('Disks');
+        const disksLabel = p5.createSpan('Disks');
         disksLabel.addClass('label');
-        disksLabel.position(title.x + 320, title.y);
+        disksLabel.position(RIGHT_MENU_X, TOPBAR_Y);
 
-        const disksNumSlider = p.createSlider(3, 15, 3);
-        disksNumSlider.position(
-          disksLabel.x + disksLabel.width + 10,
-          disksLabel.y,
-        );
+        const disksNumSlider = p5.createSlider(3, 21, 3);
+        disksNumSlider.position(RIGHT_MENU_X + 46, TOPBAR_Y);
 
-        const speedLabel = p.createSpan('Speed');
+        const speedLabel = p5.createSpan('Speed');
         speedLabel.addClass('label');
-        speedLabel.position(
-          disksNumSlider.x + disksNumSlider.width + 10,
-          disksNumSlider.y,
-        );
+        speedLabel.position(RIGHT_MENU_X + 188, TOPBAR_Y);
 
-        const speedSlider = p.createSlider(1, 120, 5);
-        speedSlider.position(speedLabel.x + speedLabel.width + 5, speedLabel.y);
+        const speedSlider = p5.createSlider(1, 120, 5);
+        speedSlider.position(RIGHT_MENU_X + 240, TOPBAR_Y);
 
-        const startBtn = p.createButton(initValues.startIcon);
-        startBtn.position(
-          speedSlider.x + speedSlider.width + 20,
-          speedSlider.y,
-        );
+        const startButton = p5.createButton(p5DOM.startIcon);
+        startButton.position(RIGHT_MENU_X + 379, TOPBAR_Y);
 
-        const resetBtn = p.createButton('Reset');
-        resetBtn.position(startBtn.x + startBtn.width + 8, startBtn.y);
+        const resetBtn = p5.createButton('Reset');
+        resetBtn.position(RIGHT_MENU_X + 450, TOPBAR_Y);
 
-        const infoLabel = p.createSpan(initValues.infoLabelDefault);
+        const infoLabel = p5.createSpan(p5DOM.infoLabelDefault);
         infoLabel.addClass('label');
-        infoLabel.position(resetBtn.x + 100, resetBtn.y);
-
-        p.createSpan('A').position(153.5, 625);
-        p.createSpan('B').position(503.5, 625);
-        p.createSpan('C').position(853.5, 625);
+        infoLabel.position(RIGHT_MENU_X + 550, TOPBAR_Y);
 
         disksNumSlider.elt.addEventListener('change', () => {
-          reload();
+          game.numberOfDisks = Number(disksNumSlider.value());
+          reset(p5);
         });
 
         speedSlider.elt.addEventListener('change', () => {
-          window.global.speed = speedSlider.value();
+          game.speed = speedSlider.value();
         });
 
-        startBtn.elt.addEventListener('click', async () => {
-          if (window.global.moves.length === 0) {
-            reload();
-
-            await init();
-            const moves = hanoi(Number(disksNumSlider.value()));
-            window.global.moves = moves;
-
-            startBtn.html(initValues.pauseIcon);
+        startButton.elt.addEventListener('click', () => {
+          if (game.moves.length === 0) {
+            start(p5);
             return;
           }
-
-          if (window.global.pause) {
-            startBtn.html(initValues.pauseIcon);
-          } else {
-            startBtn.html(initValues.startIcon);
-          }
-
-          window.global.pause = !window.global.pause;
+          pause();
         });
 
-        resetBtn.elt.addEventListener('click', () => {
-          reload();
-        });
+        resetBtn.elt.addEventListener('click', () => reset(p5));
 
-        window.global = {
-          startBtn,
-          infoLabel,
-          disksNumSlider,
-          ...defaultValues,
-          ...initValues,
-        };
+        p5DOM.startButton = startButton;
+        p5DOM.infoLabel = infoLabel;
 
-        buildTowers();
-        buildDisks(disksNumSlider.value());
+        drawTowers(p5);
+        createAndDrawDisks(p5, game.numberOfDisks);
       };
 
-      p.draw = () => {
-        if (!window.global.pause) {
-          if (
-            typeof window.global.moves !== 'undefined'
-            && window.global.stepsCounter < window.global.moves.length
-            && typeof window.global.disk === 'undefined'
-          ) {
-            window.global.moveTowers = window.global.moves[window.global.stepsCounter].split(':');
-            window.global.disk = window.global.towers[window.global.moveTowers[0]].pop();
-            window.global.start = window.global.positions[window.global.moveTowers[0]]
-              + window.global.disk.size / 2;
-            window.global.end = window.global.positions[window.global.moveTowers[1]]
-              + window.global.disk.size / 2;
-            window.global.up = 550
-              - window.global.towers[window.global.moveTowers[0]].length * 30;
-            clean();
-          }
-          if (typeof window.global.disk !== 'undefined') {
-            if (
-              typeof window.global.up === 'undefined'
-              && typeof window.global.down === 'undefined'
-              && window.global.moveTowers[0] < window.global.moveTowers[1]
-              && window.global.start < window.global.end
-            ) {
-              clean();
-              drawDisk(window.global.disk, window.global.start, 80);
-              window.global.start += window.global.speed;
-              if (window.global.start >= window.global.end) window.global.down = 80;
-            }
-            if (
-              typeof window.global.up === 'undefined'
-              && typeof window.global.down === 'undefined'
-              && window.global.moveTowers[0] > window.global.moveTowers[1]
-              && window.global.start > window.global.end
-            ) {
-              clean();
-              drawDisk(window.global.disk, window.global.start, 80);
-              window.global.start -= window.global.speed;
-              if (window.global.start <= window.global.end) window.global.down = 80;
-            }
-            if (typeof window.global.up !== 'undefined') {
-              if (window.global.up > 80) {
-                clean();
-                drawDisk(
-                  window.global.disk,
-                  window.global.start,
-                  window.global.up,
-                );
-                window.global.up -= window.global.speed;
-              } else {
-                window.global.up = undefined;
-              }
-            }
-            if (typeof window.global.down !== 'undefined') {
-              if (
-                window.global.down
-                <= 550
-                - (window.global.towers[window.global.moveTowers[1]].length
-                  * 30
-                  + window.global.disk.size / 2)
-              ) {
-                clean();
-                drawDisk(
-                  window.global.disk,
-                  window.global.start,
-                  window.global.down,
-                );
-                window.global.down += window.global.speed;
-              } else {
-                window.global.towers[window.global.moveTowers[1]].push(
-                  window.global.disk,
-                );
-                clean();
-                window.global.stepsCounter += 1;
-                window.global.disk = undefined;
-                window.global.down = undefined;
+      p5.draw = () => {
+        if (game.pause) {
+          return;
+        }
+
+        if (!animation.currentDisk && game.steps < game.moves.length) {
+          const [startIdx, endIdx] = game.moves[game.steps].split(':');
+
+          const currentMove = {
+            from: game.towers[Number(startIdx)],
+            to: game.towers[Number(endIdx)],
+          };
+
+          const currentDisk = currentMove.from.disks.pop();
+
+          animation.currentDisk = currentDisk;
+
+          animation.currentMove = {
+            ...currentMove,
+            start: currentMove.from.positionX + currentDisk.size / 2,
+            end: currentMove.to.positionX + currentDisk.size / 2,
+            up: draw.diskY - currentMove.from.disks.length * draw.diskMarginY,
+            down: null,
+          };
+
+          refreshCanvas(p5);
+        }
+
+        if (animation.currentDisk) {
+          const isMovingHorizontallly = animation.currentMove.up === null
+            && animation.currentMove.down === null;
+
+          if (isMovingHorizontallly) {
+            if (animation.currentMove.start < animation.currentMove.end) {
+              refreshCanvas(p5);
+              drawDiskByCoordinates(
+                p5,
+                animation.currentDisk,
+                animation.currentMove.start,
+                draw.topMargin,
+              );
+
+              animation.currentMove.start += game.speed;
+
+              if (animation.currentMove.start >= animation.currentMove.end) {
+                animation.currentMove.down = draw.topMargin;
               }
             }
 
-            if (window.global.stepsCounter <= window.global.moves.length) {
-              window.global.infoLabel.html(
-                `Step: <sup>${window.global.stepsCounter}</sup>&frasl;<sub>${window.global.moves.length}</sub>`,
+            if (animation.currentMove.start > animation.currentMove.end) {
+              refreshCanvas(p5);
+              drawDiskByCoordinates(
+                p5,
+                animation.currentDisk,
+                animation.currentMove.start,
+                draw.topMargin,
               );
+
+              animation.currentMove.start -= game.speed;
+
+              if (animation.currentMove.start <= animation.currentMove.end) {
+                animation.currentMove.down = draw.topMargin;
+              }
             }
+          }
+
+          if (animation.currentMove.up !== null) {
+            if (animation.currentMove.up <= draw.topMargin) {
+              animation.currentMove.up = null;
+              return;
+            }
+
+            if (animation.currentMove.up > draw.topMargin) {
+              refreshCanvas(p5);
+              drawDiskByCoordinates(
+                p5,
+                animation.currentDisk,
+                animation.currentMove.start,
+                animation.currentMove.up,
+              );
+
+              animation.currentMove.up -= game.speed;
+            }
+          }
+
+          if (animation.currentMove.down !== null) {
+            const disksLength = animation.currentMove.to.disks.length;
+            const disksHeight = disksLength * (draw.diskMarginY + draw.fillSize);
+
+            if (animation.currentMove.down <= draw.diskY - disksHeight) {
+              refreshCanvas(p5);
+              drawDiskByCoordinates(
+                p5,
+                animation.currentDisk,
+                animation.currentMove.start,
+                animation.currentMove.down,
+              );
+
+              animation.currentMove.down += game.speed;
+              return;
+            }
+
+            // End of disk animation
+            animation.currentMove.to.disks.push(animation.currentDisk);
+            game.steps += 1;
+            animation.currentDisk = null;
+            refreshCanvas(p5);
+          }
+
+          // End of all animations
+          if (game.steps <= game.moves.length) {
+            p5DOM.infoLabel.html(`Step: <sup>${game.steps}</sup>&frasl;<sub>${game.moves.length}</sub>`);
           }
         }
       };
