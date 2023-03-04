@@ -1,14 +1,16 @@
-import { createEffect } from 'solid-js';
+import { onMount } from 'solid-js';
 
 import { p5 } from 'p5js-wrapper';
 
+import init, { hanoi } from '@wasm/games';
+
 function Hanoi() {
-  createEffect(() => {
+  onMount(() => {
     new p5((p) => {
       const defaultValues = {
         disk: undefined,
         end: undefined,
-        move_towers: undefined,
+        moveTowers: undefined,
         up: undefined,
         down: undefined,
         moves: [],
@@ -90,22 +92,6 @@ function Hanoi() {
         }
       }
 
-      const generateHanoiArray = function (disksNumber) {
-        const moves = [];
-        function recursiveHanoi(A, C, B, n) {
-          if (n === 1) {
-            moves.push(`${A};${C}`);
-          } else {
-            recursiveHanoi(A, B, C, n - 1);
-            moves.push(`${A};${C}`);
-            recursiveHanoi(B, C, A, n - 1);
-          }
-        }
-        recursiveHanoi(0, 2, 1, disksNumber);
-
-        return moves;
-      };
-
       function clean() {
         p.clear();
         buildTowers();
@@ -178,10 +164,14 @@ function Hanoi() {
           window.global.speed = speedSlider.value();
         });
 
-        startBtn.elt.addEventListener('click', () => {
+        startBtn.elt.addEventListener('click', async () => {
           if (window.global.moves.length === 0) {
             reload();
-            window.global.moves = generateHanoiArray(disksNumSlider.value());
+
+            await init();
+            const moves = hanoi(Number(disksNumSlider.value()));
+            window.global.moves = moves;
+
             startBtn.html(initValues.pauseIcon);
             return;
           }
@@ -218,21 +208,21 @@ function Hanoi() {
             && window.global.stepsCounter < window.global.moves.length
             && typeof window.global.disk === 'undefined'
           ) {
-            window.global.move_towers = window.global.moves[window.global.stepsCounter].split(';');
-            window.global.disk = window.global.towers[window.global.move_towers[0]].pop();
-            window.global.start = window.global.positions[window.global.move_towers[0]]
+            window.global.moveTowers = window.global.moves[window.global.stepsCounter].split(':');
+            window.global.disk = window.global.towers[window.global.moveTowers[0]].pop();
+            window.global.start = window.global.positions[window.global.moveTowers[0]]
               + window.global.disk.size / 2;
-            window.global.end = window.global.positions[window.global.move_towers[1]]
+            window.global.end = window.global.positions[window.global.moveTowers[1]]
               + window.global.disk.size / 2;
             window.global.up = 550
-              - window.global.towers[window.global.move_towers[0]].length * 30;
+              - window.global.towers[window.global.moveTowers[0]].length * 30;
             clean();
           }
           if (typeof window.global.disk !== 'undefined') {
             if (
               typeof window.global.up === 'undefined'
               && typeof window.global.down === 'undefined'
-              && window.global.move_towers[0] < window.global.move_towers[1]
+              && window.global.moveTowers[0] < window.global.moveTowers[1]
               && window.global.start < window.global.end
             ) {
               clean();
@@ -243,7 +233,7 @@ function Hanoi() {
             if (
               typeof window.global.up === 'undefined'
               && typeof window.global.down === 'undefined'
-              && window.global.move_towers[0] > window.global.move_towers[1]
+              && window.global.moveTowers[0] > window.global.moveTowers[1]
               && window.global.start > window.global.end
             ) {
               clean();
@@ -268,7 +258,7 @@ function Hanoi() {
               if (
                 window.global.down
                 <= 550
-                - (window.global.towers[window.global.move_towers[1]].length
+                - (window.global.towers[window.global.moveTowers[1]].length
                   * 30
                   + window.global.disk.size / 2)
               ) {
@@ -280,7 +270,7 @@ function Hanoi() {
                 );
                 window.global.down += window.global.speed;
               } else {
-                window.global.towers[window.global.move_towers[1]].push(
+                window.global.towers[window.global.moveTowers[1]].push(
                   window.global.disk,
                 );
                 clean();

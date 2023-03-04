@@ -8,5 +8,12 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
+    publicDir: 'public',
+  },
+  resolve: {
+    alias: {
+      '@': './src',
+      '@wasm': './wasm',
+    },
   },
 });

@@ -2390,7 +2390,7 @@ validate-html-nesting@^1.2.1:
   resolved "https://registry.yarnpkg.com/validate-html-nesting/-/validate-html-nesting-1.2.1.tgz#bc8fb1527be408ec4a0c254b251462aba2423f68"
   integrity sha512-T1ab131NkP3BfXB7KUSgV7Rhu81R2id+L6NaJ7NypAAG5iV6gXnPpQE5RK1fvb+3JYsPTL+ihWna5sr5RN9gaQ==
 
-vite-plugin-solid@^2.5.0:
+vite-plugin-solid@^2.6.1:
   version "2.6.1"
   resolved "https://registry.yarnpkg.com/vite-plugin-solid/-/vite-plugin-solid-2.6.1.tgz#9e2dd5e1a4b7a19956bb05d0201a53907f98282b"
   integrity sha512-/khM/ha3B5/pTWQWVJd/0n6ODPIrOcajwhbrD8Gnv37XmJJssu+KA8ssN73raMIicf2eiQKiTAV39w7dSl4Irg==
@@ -2403,7 +2403,7 @@ vite-plugin-solid@^2.5.0:
     solid-refresh "^0.5.0"
     vitefu "^0.2.3"
 
-vite@^4.1.1:
+vite@^4.1.4:
   version "4.1.4"
   resolved "https://registry.yarnpkg.com/vite/-/vite-4.1.4.tgz#170d93bcff97e0ebc09764c053eebe130bfe6ca0"
   integrity sha512-3knk/HsbSTKEin43zHu7jTwYWv81f8kgAL99G5NWBcA1LKvtvcVAC4JjBH1arBunO9kQka+1oGbrMKOjk4ZrBg==
