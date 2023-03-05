@@ -1,0 +1,14 @@
+{
+  "name": "games",
+  "collaborators": [
+    "Juan Rodriguez <sjdonado.de>"
+  ],
+  "version": "0.1.0",
+  "files": [
+    "games_bg.wasm",
+    "games.js",
+    "games_bg.js"
+  ],
+  "module": "games.js",
+  "sideEffects": false
+}

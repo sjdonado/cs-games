@@ -2,15 +2,11 @@ import { onMount } from 'solid-js';
 
 import { p5 as P5 } from 'p5js-wrapper';
 
-import init, { hanoi } from '@wasm/games';
+import { getColorByIndex } from '@src/utils/color';
 
-function getColorByIndex(index) {
-  const r = (index * 20) % 256;
-  const g = (index * 30) % 256;
-  const b = (index * 40) % 256;
-
-  return `rgb(${r}, ${g}, ${b})`;
-}
+const wasmWorker = new Worker(new URL('../workers/hanoi.js', import.meta.url), {
+  type: 'module',
+});
 
 function Hanoi() {
   const draw = {
@@ -151,21 +147,39 @@ function Hanoi() {
     createAndDrawDisks(p5, game.numberOfDisks);
   }
 
-  function start(p5) {
-    reset(p5);
-    p5DOM.startButton.html(p5DOM.pauseIcon);
-    game.moves = hanoi(game.numberOfDisks);
-    p5DOM.startButton.html(p5DOM.pauseIcon);
-  }
-
   function pause() {
     p5DOM.startButton.html(game.pause ? p5DOM.pauseIcon : p5DOM.startIcon);
     game.pause = !game.pause;
   }
 
-  onMount(async () => {
-    await init();
+  const getHanoiMoves = async (n) => new Promise((resolve) => {
+    wasmWorker.onmessage = (event) => {
+      resolve(event.data);
+    };
+    wasmWorker.postMessage({ n });
+  });
 
+  async function start(p5) {
+    reset(p5);
+
+    p5DOM.startButton.addClass('animate-pulse');
+    p5DOM.resetBtn.addClass('animate-pulse');
+    p5DOM.infoLabel.html('Loading...');
+
+    p5DOM.startButton.elt.disabled = true;
+    p5DOM.resetBtn.elt.disabled = true;
+
+    game.moves = await getHanoiMoves(game.numberOfDisks);
+
+    p5DOM.startButton.html(p5DOM.pauseIcon);
+    p5DOM.startButton.removeClass('animate-pulse');
+    p5DOM.resetBtn.removeClass('animate-pulse');
+
+    p5DOM.startButton.elt.disabled = false;
+    p5DOM.resetBtn.elt.disabled = false;
+  }
+
+  onMount(async () => {
     new P5((p5) => {
       p5.setup = () => {
         const TOPBAR_Y = 20;
@@ -181,7 +195,7 @@ function Hanoi() {
         disksLabel.addClass('label');
         disksLabel.position(RIGHT_MENU_X, TOPBAR_Y);
 
-        const disksNumSlider = p5.createSlider(3, 21, 3);
+        const disksNumSlider = p5.createSlider(3, 24, 3);
         disksNumSlider.position(RIGHT_MENU_X + 46, TOPBAR_Y);
 
         const speedLabel = p5.createSpan('Speed');
@@ -210,9 +224,9 @@ function Hanoi() {
           game.speed = speedSlider.value();
         });
 
-        startButton.elt.addEventListener('click', () => {
+        startButton.elt.addEventListener('click', async () => {
           if (game.moves.length === 0) {
-            start(p5);
+            await start(p5);
             return;
           }
           pause();
@@ -221,6 +235,7 @@ function Hanoi() {
         resetBtn.elt.addEventListener('click', () => reset(p5));
 
         p5DOM.startButton = startButton;
+        p5DOM.resetBtn = resetBtn;
         p5DOM.infoLabel = infoLabel;
 
         drawTowers(p5);
@@ -232,6 +247,7 @@ function Hanoi() {
           return;
         }
 
+        // Start of the disk animation
         if (!animation.currentDisk && game.steps < game.moves.length) {
           const [startIdx, endIdx] = game.moves[game.steps].split(':');
 
@@ -259,6 +275,7 @@ function Hanoi() {
           const isMovingHorizontallly = animation.currentMove.up === null
             && animation.currentMove.down === null;
 
+          // moving from right to left or left to right
           if (isMovingHorizontallly) {
             if (animation.currentMove.start < animation.currentMove.end) {
               refreshCanvas(p5);
@@ -272,6 +289,7 @@ function Hanoi() {
               animation.currentMove.start += game.speed;
 
               if (animation.currentMove.start >= animation.currentMove.end) {
+                animation.currentMove.start = animation.currentMove.end;
                 animation.currentMove.down = draw.topMargin;
               }
             }
@@ -288,11 +306,13 @@ function Hanoi() {
               animation.currentMove.start -= game.speed;
 
               if (animation.currentMove.start <= animation.currentMove.end) {
+                animation.currentMove.start = animation.currentMove.end;
                 animation.currentMove.down = draw.topMargin;
               }
             }
           }
 
+          // moving down up
           if (animation.currentMove.up !== null) {
             if (animation.currentMove.up <= draw.topMargin) {
               animation.currentMove.up = null;
@@ -312,6 +332,7 @@ function Hanoi() {
             }
           }
 
+          // moving up down
           if (animation.currentMove.down !== null) {
             const disksLength = animation.currentMove.to.disks.length;
             const disksHeight = disksLength * (draw.diskMarginY + draw.fillSize);
