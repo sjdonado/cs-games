@@ -40,6 +40,8 @@ function Hanoi() {
     pause: false,
     speed: 5,
     numberOfDisks: 3,
+    maxNumberOfDisks: 24,
+    maxSpeed: 120,
   };
 
   const animation = {
@@ -55,17 +57,19 @@ function Hanoi() {
     // A
     p5.rect(pegMarginX, draw.pegY, draw.fillSize, draw.pegHeight);
     p5.rect(25, draw.baseY, draw.baseWidth, draw.fillSize);
-    p5.createSpan('A').position(pegMarginX + 5, draw.baseY + draw.fillSize);
 
     // B
     p5.rect(pegMarginX + draw.baseMarginX, draw.pegY, draw.fillSize, draw.pegHeight);
     p5.rect(25 + draw.baseMarginX, draw.baseY, draw.baseWidth, draw.fillSize);
-    p5.createSpan('B').position(pegMarginX + draw.baseMarginX + 5, draw.baseY + draw.fillSize);
 
     // C
     p5.rect(pegMarginX + draw.baseMarginX * 2, draw.pegY, draw.fillSize, draw.pegHeight);
     p5.rect(25 + draw.baseMarginX * 2, draw.baseY, draw.baseWidth, draw.fillSize);
-    p5.createSpan('C').position(pegMarginX + draw.baseMarginX * 2 + 5, draw.baseY + draw.fillSize);
+
+    p5.textSize(20);
+    p5.text('A', pegMarginX + 5, draw.baseY + draw.fillSize + 3, draw.fillSize, draw.fillSize);
+    p5.text('B', pegMarginX + draw.baseMarginX + 5, draw.baseY + draw.fillSize + 3, draw.fillSize, draw.fillSize);
+    p5.text('C', pegMarginX + draw.baseMarginX * 2 + 5, draw.baseY + draw.fillSize + 3, draw.fillSize, draw.fillSize);
   }
 
   function drawDiskByCoordinates(p5, disk, x, y) {
@@ -153,9 +157,7 @@ function Hanoi() {
   }
 
   const getHanoiMoves = async (n) => new Promise((resolve) => {
-    wasmWorker.onmessage = (event) => {
-      resolve(event.data);
-    };
+    wasmWorker.onmessage = (event) => resolve(event.data);
     wasmWorker.postMessage({ n });
   });
 
@@ -185,7 +187,7 @@ function Hanoi() {
         const TOPBAR_Y = 20;
         const RIGHT_MENU_X = 525;
 
-        p5.createCanvas(1200, 752);
+        p5.createCanvas(1200, 766);
 
         const title = p5.createSpan('Tower of Hanoi');
         title.addClass('title');
@@ -195,14 +197,14 @@ function Hanoi() {
         disksLabel.addClass('label');
         disksLabel.position(RIGHT_MENU_X, TOPBAR_Y);
 
-        const disksNumSlider = p5.createSlider(3, 24, 3);
+        const disksNumSlider = p5.createSlider(3, game.maxNumberOfDisks, 3);
         disksNumSlider.position(RIGHT_MENU_X + 46, TOPBAR_Y);
 
         const speedLabel = p5.createSpan('Speed');
         speedLabel.addClass('label');
         speedLabel.position(RIGHT_MENU_X + 188, TOPBAR_Y);
 
-        const speedSlider = p5.createSlider(1, 120, 5);
+        const speedSlider = p5.createSlider(1, game.maxSpeed, 5);
         speedSlider.position(RIGHT_MENU_X + 240, TOPBAR_Y);
 
         const startButton = p5.createButton(p5DOM.startIcon);
@@ -247,7 +249,7 @@ function Hanoi() {
           return;
         }
 
-        // Start of the disk animation
+        // start of the disk animation
         if (!animation.currentDisk && game.steps < game.moves.length) {
           const [startIdx, endIdx] = game.moves[game.steps].split(':');
 
