@@ -2,32 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
-.title {
-  font-size: 21px;
-  font-weight: bold;
-  margin-top: 5px;
-  text-decoration: underline;
+.game-container {
+  max-width: 1180px;
+  max-height: 778px;
+  overflow: scroll;
 }
 
-button {
-  display: inline-block;
+.game-navbar {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 0 2px;
+  max-width: 1140px;
+}
+
+.game-navbar > .title, .status-label, .sliders-container, .buttons-container {
+  flex: 1;
+}
+
+.sliders-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+.sliders-container > div {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.game-navbar > .title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  min-width: 160px;
+}
+
+.buttons-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+.buttons-container > button {
   cursor: pointer;
-  background-color: #ffffff;
+  display: inline-block;
+  padding: 6px 24px;
   border-radius: 6px;
   border: 1px solid #dcdcdc;
-  color: #666666;
   font-size: 15px;
   font-weight: bold;
   font-family: sans-serif;
-  padding: 6px 24px;
+  background-color: #ffffff;
+  color: #666666;
   text-decoration: none;
+  min-width: 110px;
+  max-width: 110px;
 }
 
-input[type='range'] {
-  margin-top: 10px;
-}
-
-span.label {
+.game-navbar > .status-label {
   font-weight: 15px;
-  margin-top: 5px; 
+  text-align: center;
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
+  padding: 6px 24px;
+  min-width: 120px;
+}
+
+.game-container > canvas {
+  margin-top: -12px;
+}
+
+@media (min-width: 425px) {
+  .sliders-container {
+    min-width: 370px;
+  }
+  .sliders-container > div {
+    min-width: 160px;
+  }
 }

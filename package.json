@@ -20,6 +20,7 @@
     "tailwindcss": "^3.2.4"
   },
   "dependencies": {
+    "@solidjs/router": "^0.7.0",
     "p5js-wrapper": "^1.2.3",
     "solid-js": "^1.6.10",
     "vite": "^4.1.4",

@@ -10,21 +10,21 @@ const wasmWorker = new Worker(new URL('../workers/hanoi.js', import.meta.url), {
 
 function Hanoi() {
   const draw = {
-    baseMarginX: 392,
+    baseMarginX: 382,
     baseWidth: 370,
     pegHeight: 600,
-    baseY: 725,
-    pegY: 130,
-    diskY: 705,
+    baseY: 705,
+    pegY: 110,
+    diskY: 685,
     diskMarginY: 25,
     fillSize: 20,
-    topMargin: 80,
+    topMargin: 60,
   };
 
   const p5DOM = {
     startButton: undefined,
-    infoLabel: undefined,
-    infoLabelDefault: 'Step: 0/0',
+    statusLabel: undefined,
+    infoLabelDefault: 'Steps: 0/0',
     startIcon: '&#9654;',
     pauseIcon: '&#9208;',
   };
@@ -50,9 +50,8 @@ function Hanoi() {
   };
 
   function drawTowers(p5) {
-    const pegMarginX = draw.baseMarginX / 2 + 4;
-
-    p5.fill(p5.color(65));
+    const pegMarginX = draw.baseMarginX / 2 + 9;
+    p5.fill(140);
 
     // A
     p5.rect(pegMarginX, draw.pegY, draw.fillSize, draw.pegHeight);
@@ -66,7 +65,9 @@ function Hanoi() {
     p5.rect(pegMarginX + draw.baseMarginX * 2, draw.pegY, draw.fillSize, draw.pegHeight);
     p5.rect(25 + draw.baseMarginX * 2, draw.baseY, draw.baseWidth, draw.fillSize);
 
+    p5.fill(50);
     p5.textSize(20);
+
     p5.text('A', pegMarginX + 5, draw.baseY + draw.fillSize + 3, draw.fillSize, draw.fillSize);
     p5.text('B', pegMarginX + draw.baseMarginX + 5, draw.baseY + draw.fillSize + 3, draw.fillSize, draw.fillSize);
     p5.text('C', pegMarginX + draw.baseMarginX * 2 + 5, draw.baseY + draw.fillSize + 3, draw.fillSize, draw.fillSize);
@@ -76,6 +77,7 @@ function Hanoi() {
     p5.fill(getColorByIndex(disk.index + 2));
     p5.rect(x - draw.fillSize, y, draw.baseWidth - 10 - disk.size, 20, 20, 15);
     p5.fill(50);
+    p5.textSize(15);
 
     p5.text(
       disk.index,
@@ -88,8 +90,6 @@ function Hanoi() {
     let i = 0;
     let j = 0;
     let width = 0;
-
-    p5.textSize(15);
 
     while (i < numberOfDisks) {
       game.towers[0].disks.push({ index: i + 1, size: width });
@@ -144,7 +144,7 @@ function Hanoi() {
 
     p5.clear();
 
-    p5DOM.infoLabel.html(p5DOM.infoLabelDefault);
+    p5DOM.statusLabel.html(p5DOM.infoLabelDefault);
     p5DOM.startButton.html(p5DOM.startIcon);
 
     drawTowers(p5);
@@ -166,7 +166,7 @@ function Hanoi() {
 
     p5DOM.startButton.addClass('animate-pulse');
     p5DOM.resetBtn.addClass('animate-pulse');
-    p5DOM.infoLabel.html('Loading...');
+    p5DOM.statusLabel.html('Loading...');
 
     p5DOM.startButton.elt.disabled = true;
     p5DOM.resetBtn.elt.disabled = true;
@@ -184,38 +184,30 @@ function Hanoi() {
   onMount(async () => {
     new P5((p5) => {
       p5.setup = () => {
-        const TOPBAR_Y = 20;
-        const RIGHT_MENU_X = 525;
-
-        p5.createCanvas(1200, 766);
-
-        const title = p5.createSpan('Tower of Hanoi');
-        title.addClass('title');
-        title.position(25, TOPBAR_Y);
+        const canvas = p5.createCanvas(1140, 748);
+        canvas.parent('hanoi');
 
         const disksLabel = p5.createSpan('Disks');
-        disksLabel.addClass('label');
-        disksLabel.position(RIGHT_MENU_X, TOPBAR_Y);
+        disksLabel.parent('disk-slider');
 
         const disksNumSlider = p5.createSlider(3, game.maxNumberOfDisks, 3);
-        disksNumSlider.position(RIGHT_MENU_X + 46, TOPBAR_Y);
+        disksNumSlider.parent('disk-slider');
 
         const speedLabel = p5.createSpan('Speed');
-        speedLabel.addClass('label');
-        speedLabel.position(RIGHT_MENU_X + 188, TOPBAR_Y);
+        speedLabel.parent('speed-slider');
 
         const speedSlider = p5.createSlider(1, game.maxSpeed, 5);
-        speedSlider.position(RIGHT_MENU_X + 240, TOPBAR_Y);
+        speedSlider.parent('speed-slider');
 
         const startButton = p5.createButton(p5DOM.startIcon);
-        startButton.position(RIGHT_MENU_X + 379, TOPBAR_Y);
+        startButton.parent('buttons-container');
 
         const resetBtn = p5.createButton('Reset');
-        resetBtn.position(RIGHT_MENU_X + 450, TOPBAR_Y);
+        resetBtn.parent('buttons-container');
 
-        const infoLabel = p5.createSpan(p5DOM.infoLabelDefault);
-        infoLabel.addClass('label');
-        infoLabel.position(RIGHT_MENU_X + 550, TOPBAR_Y);
+        const statusLabel = p5.createSpan(p5DOM.infoLabelDefault);
+        statusLabel.addClass('status-label');
+        statusLabel.parent('hanoi-game-navbar');
 
         disksNumSlider.elt.addEventListener('change', () => {
           game.numberOfDisks = Number(disksNumSlider.value());
@@ -238,7 +230,7 @@ function Hanoi() {
 
         p5DOM.startButton = startButton;
         p5DOM.resetBtn = resetBtn;
-        p5DOM.infoLabel = infoLabel;
+        p5DOM.statusLabel = statusLabel;
 
         drawTowers(p5);
         createAndDrawDisks(p5, game.numberOfDisks);
@@ -361,14 +353,25 @@ function Hanoi() {
 
           // End of all animations
           if (game.steps <= game.moves.length) {
-            p5DOM.infoLabel.html(`Step: <sup>${game.steps}</sup>&frasl;<sub>${game.moves.length}</sub>`);
+            p5DOM.statusLabel.html(`Steps: <sup>${game.steps}</sup>&frasl;<sub>${game.moves.length}</sub>`);
           }
         }
       };
     });
   });
 
-  return <></>;
+  return (
+    <div id="hanoi" class="game-container">
+      <div id="hanoi-game-navbar" class="game-navbar">
+        <span class="title">Tower of Hanoi</span>
+        <div class="sliders-container">
+          <div id="disk-slider" />
+          <div id="speed-slider" />
+        </div>
+        <div id="buttons-container" class="buttons-container" />
+      </div>
+    </div>
+  );
 }
 
 export default Hanoi;
