@@ -7,6 +7,7 @@ import {
 } from '@solidjs/router';
 
 const Hanoi = lazy(() => import('@src/pages/Hanoi'));
+const TicTacToe = lazy(() => import('@src/pages/TicTacToe'));
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           </A>
           <nav class="space-y-2">
             <A href="/tower-of-hanoi" class="flex items-center p-2 ml-3 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 underline">Tower of Hanoi</A>
+            <A href="tic-tac-toe" class="flex items-center p-2 ml-3 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 underline">Tic Tac Toe</A>
           </nav>
         </div>
       </aside>
@@ -38,6 +40,7 @@ function App() {
       <div class="p-4 sm:ml-64">
         <Routes>
           <Route path="/tower-of-hanoi" component={Hanoi} />
+          <Route path="/tic-tac-toe" component={TicTacToe} />
           <Route path="/" element={<Navigate href="/tower-of-hanoi" />} />
         </Routes>
       </div>
