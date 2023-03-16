@@ -81,6 +81,14 @@
   margin-top: -12px;
 }
 
+#tic-tac-toe > canvas {
+  margin: 6px 12px;
+}
+
+#tic-tac-toe-navbar > .buttons-container {
+  justify-content: flex-start;
+}
+
 @media (min-width: 425px) {
   .sliders-container {
     min-width: 370px;

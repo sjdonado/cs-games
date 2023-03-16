@@ -69,6 +69,8 @@ function TicTacToe() {
   };
 
   function drawTable(p5) {
+    p5.clear();
+
     p5.strokeWeight(6.0);
     p5.strokeCap(p5.ROUND);
 
@@ -126,7 +128,6 @@ function TicTacToe() {
   }
 
   function drawTableMoves(p5) {
-    p5.clear();
     drawTable(p5);
 
     p5.strokeWeight(8.0);
@@ -195,16 +196,40 @@ function TicTacToe() {
     }
   }
 
+  function reset(p5) {
+    Object.assign(game, {
+      board: Array.from(
+        { length: BOARD_SIZE },
+        () => Array.from({ length: BOARD_SIZE }, () => PLAYERS.Blank),
+      ),
+      winner: PLAYERS.Blank,
+      moveCount: 0,
+      refresh: true,
+    });
+
+    drawTable(p5);
+  }
+
   onMount(async () => {
     new P5((p5) => {
       p5.setup = () => {
         const canvas = p5.createCanvas(1000, 650);
         canvas.parent('tic-tac-toe');
 
+        const resetBtn = p5.createButton('Reset');
+        resetBtn.parent('buttons-container');
+
+        resetBtn.elt.addEventListener('click', () => {
+          reset(p5);
+        });
+
         drawTable(p5);
       };
 
       p5.mouseClicked = () => {
+        if (game.winner !== PLAYERS.Blank) {
+          return;
+        }
         for (let i = 0; i < BOARD_SIZE; i += 1) {
           for (let j = 0; j < BOARD_SIZE; j += 1) {
             if (
@@ -213,7 +238,6 @@ function TicTacToe() {
               && p5.mouseY > draw.centers[i][j].y - draw.paddingY
               && p5.mouseY < draw.centers[i][j].y + draw.paddingY
               && game.board[i][j] === PLAYERS.Blank
-              && game.winner === PLAYERS.Blank
             ) {
               const move = game.moveCount % 2 === 0 ? PLAYERS.O : PLAYERS.X;
               game.board[i][j] = move;
@@ -293,7 +317,12 @@ function TicTacToe() {
   });
 
   return (
-    <div id="tic-tac-toe" class="game-container" />
+    <div id="tic-tac-toe" class="game-container">
+      <div id="tic-tac-toe-navbar" class="game-navbar">
+        <span class="title">Tic Tac Toe</span>
+        <div id="buttons-container" class="buttons-container" />
+      </div>
+    </div>
   );
 }
 

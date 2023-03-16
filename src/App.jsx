@@ -17,7 +17,7 @@ function App() {
         data-drawer-toggle="sidebar"
         aria-controls="sidebar"
         type="button"
-        class="inline-flex items-center p-2 mt-4 ml-3 text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
+        class="inline-flex items-center p-2 mt-4 ml-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
       >
         <span class="sr-only">Open sidebar</span>
         <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
@@ -31,8 +31,22 @@ function App() {
             <span class="self-center text-xl font-semibold whitespace-nowrap">CS Games</span>
           </A>
           <nav class="space-y-2">
-            <A href="/tower-of-hanoi" class="flex items-center p-2 ml-3 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 underline">Tower of Hanoi</A>
-            <A href="tic-tac-toe" class="flex items-center p-2 ml-3 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 underline">Tic Tac Toe</A>
+            <A
+              data-drawer-hide="sidebar"
+              aria-controls="sidebar"
+              href="/tic-tac-toe"
+              class="flex items-center p-2 ml-3 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 underline"
+            >
+              Tic Tac Toe
+            </A>
+            <A
+              data-drawer-hide="sidebar"
+              aria-controls="sidebar"
+              href="/tower-of-hanoi"
+              class="flex items-center p-2 ml-3 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 underline"
+            >
+              Tower of Hanoi
+            </A>
           </nav>
         </div>
       </aside>
