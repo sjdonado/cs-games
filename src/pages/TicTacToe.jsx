@@ -2,10 +2,17 @@ import { onMount } from 'solid-js';
 
 import { p5 as P5 } from 'p5js-wrapper';
 
-const PLAYERS = {
+import { computermove } from '@wasm/games';
+
+const PLAYER = {
   Blank: 0,
   X: 1,
   O: 2,
+};
+
+const LEVELS = {
+  Easy: 0,
+  Hard: 2,
 };
 
 const LINE_TYPES = {
@@ -50,11 +57,12 @@ function TicTacToe() {
   const game = {
     board: Array.from(
       { length: BOARD_SIZE },
-      () => Array.from({ length: BOARD_SIZE }, () => PLAYERS.Blank),
+      () => Array.from({ length: BOARD_SIZE }, () => PLAYER.Blank),
     ),
-    winner: PLAYERS.Blank,
+    winner: PLAYER.Blank,
     moveCount: 0,
     refresh: true,
+    level: LEVELS.Easy,
   };
 
   const animation = {
@@ -100,18 +108,18 @@ function TicTacToe() {
     );
   }
 
-  function drawMove(p5, x, y, move) {
-    if (move === PLAYERS.Blank) {
+  function drawMove(p5, x, y, player) {
+    if (player === PLAYER.Blank) {
       return;
     }
 
     const centerPoint = draw.centers[x][y];
 
-    if (move === PLAYERS.O) {
+    if (player === PLAYER.O) {
       p5.ellipse(centerPoint.x, centerPoint.y, draw.paddingX, draw.paddingY);
     }
 
-    if (move === PLAYERS.X) {
+    if (player === PLAYER.X) {
       p5.line(
         centerPoint.x - draw.paddingX / 2,
         centerPoint.y - draw.paddingY / 2,
@@ -132,11 +140,11 @@ function TicTacToe() {
 
     p5.strokeWeight(8.0);
     game.board.forEach((row, x) => {
-      row.forEach((move, y) => drawMove(p5, x, y, move));
+      row.forEach((player, y) => drawMove(p5, x, y, player));
     });
   }
 
-  function checkWinner(x, y, move) {
+  function checkWinner(x, y, player) {
     const rows = [];
     const columns = [];
     const diag = [];
@@ -144,19 +152,19 @@ function TicTacToe() {
 
     for (let i = 0; i < BOARD_SIZE; i += 1) {
       // check col
-      if (game.board[x][i] === move) {
+      if (game.board[x][i] === player) {
         rows.push(draw.centers[x][i]);
       }
       // check row
-      if (game.board[i][y] === move) {
+      if (game.board[i][y] === player) {
         columns.push(draw.centers[i][y]);
       }
       // check diag
-      if (x === y && game.board[i][i] === move) {
+      if (x === y && game.board[i][i] === player) {
         diag.push(draw.centers[i][i]);
       }
       // check anti diag
-      if (x + y === BOARD_SIZE - 1 && game.board[i][BOARD_SIZE - i - 1] === move) {
+      if (x + y === BOARD_SIZE - 1 && game.board[i][BOARD_SIZE - i - 1] === player) {
         antiDiag.push(draw.centers[i][BOARD_SIZE - i - 1]);
       }
     }
@@ -191,8 +199,7 @@ function TicTacToe() {
         lineType: line.lineType,
         frames: 0,
       };
-      game.winner = move;
-      console.log('winner', move, animation);
+      game.winner = player;
     }
   }
 
@@ -200,14 +207,29 @@ function TicTacToe() {
     Object.assign(game, {
       board: Array.from(
         { length: BOARD_SIZE },
-        () => Array.from({ length: BOARD_SIZE }, () => PLAYERS.Blank),
+        () => Array.from({ length: BOARD_SIZE }, () => PLAYER.Blank),
       ),
-      winner: PLAYERS.Blank,
+      winner: PLAYER.Blank,
       moveCount: 0,
       refresh: true,
     });
 
     drawTable(p5);
+  }
+
+  async function makeMove(i, j) {
+    game.board[i][j] = PLAYER.O;
+    game.moveCount += 1;
+
+    const nextMove = computermove(game.board, game.level);
+    if (nextMove) {
+      game.board[nextMove.row][nextMove.col] = PLAYER.X;
+      game.moveCount += 1;
+
+      checkWinner(nextMove.row, nextMove.col, PLAYER.X);
+    }
+
+    checkWinner(i, j, PLAYER.O);
   }
 
   onMount(async () => {
@@ -216,6 +238,11 @@ function TicTacToe() {
         const canvas = p5.createCanvas(1000, 650);
         canvas.parent('tic-tac-toe');
 
+        const levelSelect = p5.createSelect();
+        levelSelect.parent('buttons-container');
+        levelSelect.option('Easy');
+        levelSelect.option('Hard');
+
         const resetBtn = p5.createButton('Reset');
         resetBtn.parent('buttons-container');
 
@@ -223,11 +250,24 @@ function TicTacToe() {
           reset(p5);
         });
 
+        levelSelect.elt.addEventListener('change', () => {
+          const level = levelSelect.value();
+          if (level === 'Easy') {
+            game.level = LEVELS.Easy;
+          }
+
+          if (level === 'Hard') {
+            game.level = LEVELS.Hard;
+          }
+
+          reset(p5);
+        });
+
         drawTable(p5);
       };
 
-      p5.mouseClicked = () => {
-        if (game.winner !== PLAYERS.Blank) {
+      p5.mouseClicked = async () => {
+        if (game.winner !== PLAYER.Blank) {
           return;
         }
         for (let i = 0; i < BOARD_SIZE; i += 1) {
@@ -237,13 +277,9 @@ function TicTacToe() {
               && p5.mouseX < draw.centers[i][j].x + draw.paddingX
               && p5.mouseY > draw.centers[i][j].y - draw.paddingY
               && p5.mouseY < draw.centers[i][j].y + draw.paddingY
-              && game.board[i][j] === PLAYERS.Blank
+              && game.board[i][j] === PLAYER.Blank
             ) {
-              const move = game.moveCount % 2 === 0 ? PLAYERS.O : PLAYERS.X;
-              game.board[i][j] = move;
-              game.moveCount += 1;
-
-              checkWinner(i, j, move);
+              makeMove(i, j);
             }
           }
         }
@@ -256,7 +292,7 @@ function TicTacToe() {
           game.refresh = false;
         }
 
-        if (game.winner !== PLAYERS.Blank) {
+        if (game.winner !== PLAYER.Blank) {
           p5.strokeWeight(12.0);
 
           const animationFramesX1 = animation.winnerLine.x1 + animation.winnerLine.frames;

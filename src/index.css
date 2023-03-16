@@ -52,7 +52,7 @@
   gap: 5px;
 }
 
-.buttons-container > button {
+.buttons-container > button, select {
   cursor: pointer;
   display: inline-block;
   padding: 6px 24px;
@@ -66,6 +66,11 @@
   text-decoration: none;
   min-width: 110px;
   max-width: 110px;
+}
+
+.buttons-container > select {
+  min-width: 125px;
+  max-width: 125px;
 }
 
 .game-navbar > .status-label {
