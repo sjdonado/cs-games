@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "build:wasm": "wasm-pack build -d wasm --no-typescript"
+    "build:wasm": "wasm-pack build -d wasm --no-typescript",
+    "deploy": "npm run build:wasm && npm run build && firebase deploy"
   },
   "license": "MIT",
   "devDependencies": {

@@ -53,9 +53,9 @@ function App() {
 
       <div class="p-4 sm:ml-64">
         <Routes>
-          <Route path="/tower-of-hanoi" component={Hanoi} />
           <Route path="/tic-tac-toe" component={TicTacToe} />
-          <Route path="/" element={<Navigate href="/tower-of-hanoi" />} />
+          <Route path="/tower-of-hanoi" component={Hanoi} />
+          <Route path="/" element={<Navigate href="/tic-tac-toe" />} />
         </Routes>
       </div>
     </>
