@@ -70,8 +70,6 @@ fn minimax(
 ) -> i32 {
     let winner = check_win(board);
 
-    println!("board: {:?} {}", board, winner);
-
     if winner == PLAYER_X {
         return 10;
     }

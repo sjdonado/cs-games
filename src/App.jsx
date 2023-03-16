@@ -30,7 +30,7 @@ function App() {
           <A href="/" class="flex items-center mb-5 border-b border-gray-200">
             <span class="self-center text-xl font-semibold whitespace-nowrap">CS Games</span>
           </A>
-          <nav class="space-y-2">
+          <nav class="space-y-2 h-5/6">
             <A
               data-drawer-hide="sidebar"
               aria-controls="sidebar"
@@ -48,6 +48,14 @@ function App() {
               Tower of Hanoi
             </A>
           </nav>
+          <div class="flex items-center justify-center mt-8">
+            <a
+              href="https://github.com/sjdonado/cs-games"
+              target="_blank"
+              class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:shadow-outline-gray transition duration-150 ease-in-out">
+              View on GitHub
+            </a>
+          </div>
         </div>
       </aside>
 
