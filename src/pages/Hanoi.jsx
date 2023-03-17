@@ -10,7 +10,7 @@ const wasmWorker = new Worker(new URL('../workers/hanoi.js', import.meta.url), {
 
 function Hanoi() {
   const draw = {
-    baseMarginX: 382,
+    baseMarginX: 376,
     baseWidth: 370,
     pegHeight: 600,
     baseY: 705,
@@ -184,7 +184,7 @@ function Hanoi() {
   onMount(async () => {
     new P5((p5) => {
       p5.setup = () => {
-        const canvas = p5.createCanvas(1140, 748);
+        const canvas = p5.createCanvas(1148, 748);
         canvas.parent('hanoi');
 
         const disksLabel = p5.createSpan('Disks');

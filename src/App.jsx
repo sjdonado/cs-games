@@ -35,7 +35,8 @@ function App() {
               data-drawer-hide="sidebar"
               aria-controls="sidebar"
               href="/tic-tac-toe"
-              class="flex items-center p-2 ml-3 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 underline"
+              class="flex items-center p-2 ml-3 text-base font-normal text-gray-900 rounded-lg underline"
+              activeClass="bg-gray-100"
             >
               Tic Tac Toe
             </A>
@@ -43,7 +44,8 @@ function App() {
               data-drawer-hide="sidebar"
               aria-controls="sidebar"
               href="/tower-of-hanoi"
-              class="flex items-center p-2 ml-3 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 underline"
+              class="flex items-center p-2 ml-3 text-base font-normal text-gray-900 rounded-lg underline"
+              activeClass="bg-gray-100"
             >
               Tower of Hanoi
             </A>

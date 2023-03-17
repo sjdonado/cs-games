@@ -86,6 +86,10 @@
   margin-top: -12px;
 }
 
+#hanoi > canvas {
+  margin-left: -24px;
+}
+
 #tic-tac-toe > canvas {
   margin: 6px 12px;
 }
